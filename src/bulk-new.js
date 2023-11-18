@@ -80,9 +80,10 @@ async function searchQuery(query1) {
         index: 'new',
         body: {
             query: {
-                match : {
-                    level : query1,
-                }
+                query_string: {
+                    query: `*${query1}*`,
+                    fields: ['*'], 
+                },
             }
         }
     });
