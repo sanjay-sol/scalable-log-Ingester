@@ -53,7 +53,6 @@ async function bulk() {
         datasource: dataSource
         .pipe(split(JSON.parse))
         .on('data', function (logObject) {
-          // Each logObject here is a parsed JSON object
           console.log(logObject);
         })
         .on('error', function (error) {

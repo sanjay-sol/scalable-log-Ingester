@@ -7,7 +7,6 @@ const client = new Client({
         id: 'scalable_logs:dXMtZ292LWVhc3QtMS5hd3MuZWxhc3RpYy1jbG91ZC5jb206NDQzJGE0NTRjNDAyNjM4MzRiYmU4MzFmZmRkOTQ1YWFmN2MzJDA4ZDI3NjFjYjEwOTQwNDA4OWNkZjk2MjUzOTM2ZDIy',
     },
     auth: {
-        // apiKey: 'essu_ZDIxT2J6UnZjMEpxVTNOUE0yZzVOM2xyYzJRNmNqZFBTbXB0VmkxVVQybFZUVUYxTURWcExVSlJadz09AAAAACtdyeM='
         username : 'elastic',
         password : 'ZS54aj7RcT5m9cn8QJjYvAzU'
     }
