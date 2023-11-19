@@ -1,7 +1,13 @@
 "use client";
 import { useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
+import './Home.css';
+import Button from '../components/button';
+interface LogMetadata {
+  parentResourceId: string;
+}
 
+// Define the main log type
 interface Log {
   level: string;
   message: string;
@@ -10,9 +16,8 @@ interface Log {
   traceId: string;
   spanId: string;
   commit: string;
-  parentResourceId: string;
+  metadata?: LogMetadata; // Optional metadata field
 }
-
 interface ApiResponse {
   message: string;
   result?: Log[];
@@ -27,12 +32,10 @@ export default function Home() {
 
   const handleSearch = async () => {
     try {
-      // Record start time
       const startTime = Date.now();
 
       const response: AxiosResponse<ApiResponse> = await axios.post<ApiResponse>(`http://localhost:3000/search/${searchText}`);
 
-      // Calculate response time
       const endTime = Date.now();
       const timeTaken = endTime - startTime;
       setResponseTime(timeTaken);
@@ -48,28 +51,35 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <input
-        type="text"
-        className='text-black'
-        placeholder="Enter search text"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-      />
-      <button onClick={handleSearch}>Search</button>
-      <p>{responseMessage}</p>
-      {responseTime !== null && <p>Response Time: {responseTime} milliseconds</p>}
+    <div className="search-container">
+      <div className="">
+        <input
+          type="text"
+          className="text-black m-10 p-3 rounded-md "
+          placeholder="Enter search text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+        <Button onClick={handleSearch}>Search</Button>
+       
+        
+      </div>
       {searchResults && (
-        <div>
-          <h2>Search Results:</h2>
-          <ul>
-            { searchResultsdata && searchResultsdata.map((log, index) => (
-              <li key={index}>
-                <pre>{JSON.stringify(log, null, 2)}</pre>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="search-results-container">
+      <p>{responseMessage}</p>
+      {responseTime !== null && <p className='text-base font-extrabold' >Response Time: {responseTime} ms</p>}
+        
+          <div>
+            <h2>Search Results:</h2>
+            <ul>
+              {searchResultsdata && searchResultsdata.map((log, index) => (
+                <li key={index}>
+                  <pre>{JSON.stringify(log, null, 2)}</pre>
+                </li>
+              ))}
+            </ul>
+          </div>
+      </div>
       )}
     </div>
   );

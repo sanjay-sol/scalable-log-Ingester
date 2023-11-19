@@ -1,0 +1,21 @@
+.search-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .search-input-container {
+    flex-grow: 1;
+  }
+  
+  .search-results-container {
+    flex-basis: 50%; /* Adjust this value as needed */
+    background-color: #fff; /* White background */
+    padding: 10px;
+    color: black;
+    border: 1px solid #ccc; /* Optional: Add a border for separation */
+    margin-left: 10px; /* Optional: Add margin for spacing */
+    overflow-y: auto; /* Add a scrollbar if needed */
+  }
+  
+  /* Add more styles as needed */
+  

@@ -1,30 +1,14 @@
 import express from 'express';
-import { Client } from '@elastic/elasticsearch';
+import  client  from '../client.js';
 import dotenv from 'dotenv';
-import cors from 'cors';
-
+const router = express.Router();
 dotenv.config();
 
 const app = express();
-const port = 3000 || process.env.PORT;
-
-const client = new Client({
-    cloud: {
-        id: process.env.ELASTIC_CLOUD_ID,
-    },
-    auth: {
-        username: 'elastic',
-        password: process.env.ELASTIC_PASSWORD,
-    }
-});
-
 app.use(express.json());
-app.use(cors());
 
-app.get("/", (req, res) => {
-    res.send("Hello World")
-    });
-app.post('/logs', async (req, res) => {
+
+router.post('/logs', async (req, res) => {
     try {
         if (!req.body || !Array.isArray(req.body)) {
             return res.status(400).json({ error: 'Data should be in JSON format.' });
@@ -38,7 +22,7 @@ app.post('/logs', async (req, res) => {
     }
 });
 
-app.post('/search/:text', async (req, res) => {
+router.post('/search/:text', async (req, res) => {
     try {
         const { text } = req.params;
 
@@ -54,9 +38,6 @@ app.post('/search/:text', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on the port ${port}`);
-});
 
 async function bulkIndex(dataSet) {
     const result = await client.helpers.bulk({
@@ -81,14 +62,13 @@ async function bulkIndex(dataSet) {
     return result;
 }
 
-async function searchQuery( text) {
+async function searchQuery(text) {
     const result = await client.search({
         index: 'final',
         body: {
             query: {
                 query_string: {
                     query: `*${text}*`,
-                    // fields: [field], 
                 },
             }
         }
@@ -97,3 +77,6 @@ async function searchQuery( text) {
     console.log(result?.hits?.hits?.map(hit => hit._source));
     return result;
 }
+
+
+export default router;
