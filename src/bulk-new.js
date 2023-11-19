@@ -19,7 +19,7 @@ const client = new Client({
 
 app.use(express.json());
 
-app.post('/bulk-index', async (req, res) => {
+app.post('/logs', async (req, res) => {
     try {
         if (!req.body || !Array.isArray(req.body)) {
             return res.status(400).json({ error: 'Data should be in JSON format.' });
@@ -33,15 +33,15 @@ app.post('/bulk-index', async (req, res) => {
     }
 });
 
-app.post('/search/:query1', async (req, res) => {
+app.post('/search/:text', async (req, res) => {
     try {
-        const { query1 } = req.params;
+        const { text } = req.params;
 
-        if (!query1) {
-            return res.status(400).json({ error: 'Both query and level parameters are required.' });
+        if (!text ) {
+            return res.status(400).json({ error: 'atleast one out of query or level parameters are required.' });
         }
 
-        const result = await searchQuery(query1);
+        const result = await searchQuery( text);
         res.status(200).json({ message: 'Search completed successfully.', result });
     } catch (err) {
         console.error("Error during search:", err);
@@ -50,18 +50,21 @@ app.post('/search/:query1', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on the port ${port}`);
 });
 
 async function bulkIndex(dataSet) {
     const result = await client.helpers.bulk({
         datasource: dataSet,
+        retries: 10,
+        wait: 10000,
+        concurrency: 15, 
         onDocument(doc) {
-            const { _id, ...dataWithoutId } = doc;
+            // const { _id, ...dataWithoutId } = doc;
             return {
                 index: {
                     _index: 'new',
-                    _id: _id,
+                    _id: doc._id,
                 }
             };
         },
@@ -75,19 +78,19 @@ async function bulkIndex(dataSet) {
     return result;
 }
 
-async function searchQuery(query1) {
+async function searchQuery( text) {
     const result = await client.search({
         index: 'new',
         body: {
             query: {
                 query_string: {
-                    query: `*${query1}*`,
-                    fields: ['*'], 
+                    query: `*${text}*`,
+                    // fields: [field], 
                 },
             }
         }
     });
 
-    console.log(result?.hits?.hits);
-    return result;
+    console.log(result?.hits?.hits.length);
+    return result?.hits?.hits;
 }
