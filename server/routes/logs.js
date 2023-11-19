@@ -1,12 +1,24 @@
 import express from 'express';
-import  client  from '../client.js';
+import client from '../client.js';
 import dotenv from 'dotenv';
+import redis from 'redis';
+
 const router = express.Router();
 dotenv.config();
 
+// Create a Redis client
+const redisClient = redis.createClient({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
+});
+
+// Handle Redis connection errors
+redisClient.on('error', (err) => {
+    console.error('Redis Error:', err);
+});
+
 const app = express();
 app.use(express.json());
-
 
 router.post('/logs', async (req, res) => {
     try {
@@ -22,15 +34,15 @@ router.post('/logs', async (req, res) => {
     }
 });
 
-router.post('/search/:text', async (req, res) => {
+router.post('/searchtext/:text/:size', async (req, res) => {
     try {
-        const { text } = req.params;
+        const { text, size } = req.params;
 
-        if (!text ) {
-            return res.status(400).json({ error: 'atleast one out of query or level parameters are required.' });
+        if (!text) {
+            return res.status(400).json({ error: 'At least one out of query or level parameters is required.' });
         }
 
-        const result = await searchQuery(text);
+        const result = await searchQuery(size, text);
         res.status(200).json({ message: 'Search completed successfully.', result });
     } catch (err) {
         console.error("Error during search:", err);
@@ -38,18 +50,32 @@ router.post('/search/:text', async (req, res) => {
     }
 });
 
+router.post('/searchfields/:field/:text/:size/', async (req, res) => {
+    try {
+        const { field, text, size } = req.params;
+
+        if (!text && !field) {
+            return res.status(400).json({ error: 'Both parameters are required.' });
+        }
+
+        const result = await searchQuerybyField(field, text, size);
+        res.status(200).json({ message: 'Search completed successfully.', result });
+    } catch (err) {
+        console.error("Error during search:", err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 async function bulkIndex(dataSet) {
     const result = await client.helpers.bulk({
         datasource: dataSet,
-        concurrency: 15, 
+        concurrency: 12,
         onDocument(doc) {
-            // const { _id, ...dataWithoutId } = doc;
             return {
                 index: {
                     _index: 'final',
                     _id: doc._id,
-                }
+                },
             };
         },
         onDrop(doc) {
@@ -58,11 +84,21 @@ async function bulkIndex(dataSet) {
         refreshOnCompletion: 'final',
     });
 
+    redisClient.set('dataSet', JSON.stringify(dataSet));
+
     console.log(result);
     return result;
 }
 
-async function searchQuery(text) {
+async function searchQuery(size, text) {
+    const sizeInt = parseInt(size) || 10;
+    const redisData = await redisGetAsync('dataSet');
+
+    if (redisData) {
+        console.log('Data retrieved from Redis:', JSON.parse(redisData));
+        return JSON.parse(redisData);
+    }
+
     const result = await client.search({
         index: 'final',
         body: {
@@ -70,13 +106,51 @@ async function searchQuery(text) {
                 query_string: {
                     query: `*${text}*`,
                 },
-            }
-        }
+            },
+        },
+        size: sizeInt,
     });
 
-    console.log(result?.hits?.hits?.map(hit => hit._source));
+    console.log(result?.hits?.hits?.map((hit) => hit._source));
     return result;
 }
 
+async function searchQuerybyField(field, value, size) {
+    const sizeInt = parseInt(size) || 10;
+    const redisData = await redisGetAsync('dataSet');
+
+    if (redisData) {
+        console.log('Data retrieved from Redis:', JSON.parse(redisData));
+        return JSON.parse(redisData);
+    }
+
+    // If not in Redis, query Elasticsearc
+    const result = await client.search({
+        index: 'final',
+        body: {
+            query: {
+                match: {
+                    [field]: value,
+                },
+            },
+        },
+        size: sizeInt,
+    });
+
+    console.log(result?.hits?.hits?.map((hit) => hit._source));
+    return result;
+}
+
+async function redisGetAsync(key) {
+    return new Promise((resolve, reject) => {
+        redisClient.get(key, (err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(reply);
+            }
+        });
+    });
+}
 
 export default router;
