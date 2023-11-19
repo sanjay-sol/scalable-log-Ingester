@@ -7,7 +7,6 @@ interface LogMetadata {
   parentResourceId: string;
 }
 
-// Define the main log type
 interface Log {
   level: string;
   message: string;
@@ -16,7 +15,7 @@ interface Log {
   traceId: string;
   spanId: string;
   commit: string;
-  metadata?: LogMetadata; // Optional metadata field
+  metadata?: LogMetadata; 
 }
 interface ApiResponse {
   message: string;
@@ -46,8 +45,6 @@ export default function Home() {
       setSearchResults(response?.data?.result);
       setSearchResultsdata(response?.data?.result?.hits?.hits);
       setResponseMessage(response?.data?.message);
-      console.log('search response ******', response);
-      console.log('search result ############', response?.data?.result?.hits?.hits);
     } catch (error) {
       console.error('Error searching logs:', error);
     }

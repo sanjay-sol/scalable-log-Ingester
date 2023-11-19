@@ -2,20 +2,21 @@ import express from 'express';
 import client from '../client.js';
 import dotenv from 'dotenv';
 import redis from 'redis';
+import util from 'util';
 
 const router = express.Router();
 dotenv.config();
 
-// Create a Redis client
 const redisClient = redis.createClient({
     host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379,
 });
 
-// Handle Redis connection errors
 redisClient.on('error', (err) => {
     console.error('Redis Error:', err);
 });
+
+const redisGetAsync = util.promisify(redisClient.get).bind(redisClient);
 
 const app = express();
 app.use(express.json());
@@ -84,6 +85,7 @@ async function bulkIndex(dataSet) {
         refreshOnCompletion: 'final',
     });
 
+    // Store the dataSet in Redis
     redisClient.set('dataSet', JSON.stringify(dataSet));
 
     console.log(result);
@@ -124,7 +126,7 @@ async function searchQuerybyField(field, value, size) {
         return JSON.parse(redisData);
     }
 
-    // If not in Redis, query Elasticsearc
+    // If not in Redis, query Elasticsearch
     const result = await client.search({
         index: 'final',
         body: {
@@ -139,18 +141,6 @@ async function searchQuerybyField(field, value, size) {
 
     console.log(result?.hits?.hits?.map((hit) => hit._source));
     return result;
-}
-
-async function redisGetAsync(key) {
-    return new Promise((resolve, reject) => {
-        redisClient.get(key, (err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(reply);
-            }
-        });
-    });
 }
 
 export default router;
