@@ -1,6 +1,5 @@
 
 import React, { FC, ButtonHTMLAttributes } from 'react';
-
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   customProp?: string;
 }

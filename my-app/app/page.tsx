@@ -6,7 +6,6 @@ import Button from '../components/button';
 interface LogMetadata {
   parentResourceId: string;
 }
-
 interface Log {
   level: string;
   message: string;
@@ -15,7 +14,10 @@ interface Log {
   traceId: string;
   spanId: string;
   commit: string;
-  metadata?: LogMetadata; 
+  metadata: {
+    parentResourceId: string;
+  }
+  
 }
 interface ApiResponse {
   message: string;
@@ -54,7 +56,7 @@ export default function Home() {
     try {
       const startTime = Date.now();
 
-      const response: AxiosResponse<ApiResponse> = await axios.post<ApiResponse>(`http://localhost:3000/searchfields/${searchField}/${searchValue}/${size}`);
+      const response = await axios.post(`http://localhost:3000/searchfields/${searchField}/${searchValue}/${size}`);
 
       const endTime = Date.now();
       const timeTaken = endTime - startTime;
