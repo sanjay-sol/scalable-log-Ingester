@@ -12,6 +12,8 @@ export function getElasticClient(): Client {
         id: process.env.ELASTIC_CLOUD_ID || "",
       },
       auth: {
+
+        
         username: process.env.ELASTIC_USERNAME || "",
         password: process.env.ELASTIC_PASSWORD || "",
       },
