@@ -10,3 +10,10 @@ export interface Log {
     parentResourceId: string;
   };
 }
+
+export type LogGeneric <Data = {status : number}> =  {
+  data: Data;
+  message: string;
+  status: number;
+  isPopulated: boolean;
+} 
